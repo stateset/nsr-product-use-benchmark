@@ -27,15 +27,27 @@ The snippet shows the adapter boundary; `modelFinalJson` comes from your model r
 
 ## Run and grade
 
-Use Node.js 20 or later; there are no benchmark dependencies to install.
+Use Node.js 20 or later; there are no benchmark dependencies to install. Run these commands from the benchmark directory (the root of the standalone public repository).
 
 ```bash
-node benchmarks/product-use/grade.mjs tasks       # public task prompts
-node benchmarks/product-use/grade.mjs reference   # reference tool traces, JSONL
-node benchmarks/product-use/grade.mjs self-test   # score all reference traces
-node --test benchmarks/product-use/grade.test.mjs
-node benchmarks/product-use/grade.mjs grade submissions.jsonl
+node grade.mjs tasks       # public task prompts
+node grade.mjs reference   # reference tool traces, JSONL
+node grade.mjs self-test   # score all reference traces
+node --test grade.test.mjs run.test.mjs
+node grade.mjs grade submissions.jsonl
 ```
+
+## Run an agent against the benchmark
+
+`run.mjs` runs each case in a fresh adapter process. Write an adapter for your model provider that reads one JSON object per line from stdin and writes one JSON object per line to stdout. Keep logs on stderr; stdout is the protocol channel.
+
+```bash
+node run.mjs --output attempts.jsonl -- node path/to/your-adapter.mjs
+```
+
+The runner sends `{"type":"start","id":"...","prompt":"...","tools":[...],"instruction":"..."}`. Pass the prompt, instruction, and tool schemas to the model. For each model tool call, send `{"type":"call","tool":"nsr_decide","arguments":{...}}`; the runner replies `{"type":"result","result":{...}}`. Return that result to the model. When the model is done, send `{"type":"final","final":{"disposition":"..."}}`. The runner writes one scoreable attempt per case to the output file and prints the aggregate report. It starts a new adapter process for each case, limits each case to 16 tool calls and two minutes, and never sends expected calls or answers to the adapter. The output file must not already exist.
+
+The protocol works with hosted APIs, local models, and agent frameworks. Record the exact model version and adapter code or commit alongside any published score. Do not use `reference` traces as a model submission or feed them to the model during evaluation.
 
 Each submission line has this shape. Include **calls and final only**; the scorer uses its own committed tool responses and ignores any claim about what a tool returned.
 
