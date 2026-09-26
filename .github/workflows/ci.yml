@@ -1,0 +1,16 @@
+name: Benchmark
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+      - run: node --test grade.test.mjs
+      - run: node grade.mjs self-test

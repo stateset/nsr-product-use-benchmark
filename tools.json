@@ -1,0 +1,108 @@
+[
+  {
+    "name": "nsr_decide",
+    "description": "Make an auditable decision for one action. An exact authorization_goal binds the requested subject. Returns approved, denied, or refused; approvals can include a verifiable_bundle for nsr_verify_proof. A refusal may name missing_facts. Set shadow:true for a trial that must not authorize action.",
+    "inputSchema": {
+      "type": "object",
+      "required": ["query"],
+      "properties": {
+        "query": {"type": "string"},
+        "action": {"type": "string"},
+        "authorization_goal": {
+          "type": "object",
+          "required": ["name", "args"],
+          "properties": {
+            "name": {"type": "string"},
+            "args": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["predicate"],
+            "properties": {
+              "predicate": {
+                "type": "object",
+                "required": ["name", "args"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "args": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        },
+        "mode": {"type": "string", "enum": ["fast", "accurate", "safe"]},
+        "hydrate_org_context": {"type": "boolean"},
+        "shadow": {"type": "boolean"},
+        "idempotency_key": {"type": "string"},
+        "include_trace": {"type": "boolean"}
+      }
+    }
+  },
+  {
+    "name": "nsr_verify_proof",
+    "description": "Independently verify a decision's verifiable_bundle. Pass facts, rules, proof, and org_id verbatim from that bundle. Returns verified:true or verified:false with a reason.",
+    "inputSchema": {"type": "object", "required": ["facts", "rules", "proof"], "properties": {"facts": {"type": "array"}, "rules": {"type": "array"}, "proof": {"type": "object"}, "org_id": {"type": "string"}, "as_of": {"type": "string"}}}
+  },
+  {
+    "name": "nsr_verify_plan",
+    "description": "Check every step of a consequential plan before executing any step. One denied or refused step blocks the whole plan. Returns plan_verdict and blocked_steps.",
+    "inputSchema": {"type": "object", "required": ["steps"], "properties": {"steps": {"type": "array", "items": {"type": "object", "required": ["query"], "properties": {"query": {"type": "string"}, "action": {"type": "string"}}}}, "mode": {"type": "string", "enum": ["fast", "accurate", "safe"]}, "hydrate_org_context": {"type": "boolean"}}}
+  },
+  {
+    "name": "nsr_record_outcome_by_ref",
+    "description": "Record what happened to a past decision using the external_ref supplied when it was made. Outcomes include honored, reversed, overridden, and escalated.",
+    "inputSchema": {"type": "object", "required": ["external_ref", "outcome"], "properties": {"external_ref": {"type": "string"}, "outcome": {"type": "string", "enum": ["honored", "reversed", "overridden", "escalated"]}}}
+  },
+  {
+    "name": "nsr_batch_decide",
+    "description": "Decide several cases in one request against one policy snapshot. Each item is a full decision request. Returns a per-item verdict and a summary.",
+    "inputSchema": {
+      "type": "object",
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["query"],
+            "properties": {
+              "query": {"type": "string"},
+              "action": {"type": "string"},
+              "authorization_goal": {
+                "type": "object",
+                "required": ["name", "args"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "args": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "nsr_refusal_gaps",
+    "description": "Read-only analytics: aggregate the missing premises behind recent refused decisions, ordered by frequency.",
+    "inputSchema": {"type": "object", "properties": {"window_secs": {"type": "number"}}}
+  },
+  {
+    "name": "nsr_lint_rule",
+    "description": "Validate a stored-shape rule without installing it. Reports diagnostics and has_errors. Stored rule atoms use predicate and args, unlike request-scoped if/then rules.",
+    "inputSchema": {"type": "object", "required": ["name", "head_predicate", "head_args", "body"], "properties": {"name": {"type": "string"}, "head_predicate": {"type": "string"}, "head_args": {"type": "array", "items": {"type": "string"}}, "body": {"type": "array", "items": {"type": "object", "required": ["predicate", "args"], "properties": {"predicate": {"type": "string"}, "args": {"type": "array", "items": {"type": "string"}}}}}, "effect": {"type": "string", "enum": ["permit", "deny", "review"]}}}
+  },
+  {
+    "name": "nsr_add_fact",
+    "description": "Write a fact into the organization's knowledge base. This mutates policy evidence and must not be used to fabricate a missing premise.",
+    "inputSchema": {"type": "object", "required": ["subject_id", "predicate", "object_id"], "properties": {"subject_id": {"type": "string"}, "predicate": {"type": "string"}, "object_id": {"type": "string"}}}
+  },
+  {
+    "name": "nsr_add_rule",
+    "description": "Install a stored rule into the organization's knowledge base. Lint and review a proposed rule before this mutation.",
+    "inputSchema": {"type": "object", "required": ["name", "head_predicate", "head_args", "body"], "properties": {"name": {"type": "string"}, "head_predicate": {"type": "string"}, "head_args": {"type": "array"}, "body": {"type": "array"}}}
+  }
+]
