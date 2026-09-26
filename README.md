@@ -33,7 +33,7 @@ Use Node.js 20 or later; there are no benchmark dependencies to install. Run the
 node grade.mjs tasks       # public task prompts
 node grade.mjs reference   # reference tool traces, JSONL
 node grade.mjs self-test   # score all reference traces
-node --test grade.test.mjs run.test.mjs adapters/openai-responses.test.mjs
+node --test grade.test.mjs run.test.mjs adapters/*.test.mjs
 node grade.mjs grade submissions.jsonl
 ```
 
@@ -59,6 +59,17 @@ node run.mjs --output openai-attempts.jsonl -- node adapters/openai-responses.mj
 ```
 
 The adapter passes the benchmark's tool schemas as non-strict functions, returns simulator results by `call_id`, and asks for a final JSON object. API calls can incur provider charges. No live model score is included in this repository.
+
+### Anthropic Messages API adapter
+
+The included Anthropic adapter follows the [Messages API tool-use flow](https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls). Set your API key and an explicit model ID, then run:
+
+```bash
+export ANTHROPIC_API_KEY=... ANTHROPIC_MODEL=...
+node run.mjs --output anthropic-attempts.jsonl -- node adapters/anthropic-messages.mjs
+```
+
+The adapter returns simulator results using each `tool_use_id` and preserves the assistant message when continuing the conversation. API calls can incur provider charges. No live Anthropic model score is included.
 
 Each submission line has this shape. Include **calls and final only**; the scorer uses its own committed tool responses and ignores any claim about what a tool returned.
 
