@@ -33,9 +33,19 @@ Use Node.js 20 or later; there are no benchmark dependencies to install. Run the
 node grade.mjs tasks       # public task prompts
 node grade.mjs reference   # reference tool traces, JSONL
 node grade.mjs self-test   # score all reference traces
-node --test grade.test.mjs run.test.mjs adapters/*.test.mjs
+node --test grade.test.mjs run.test.mjs teach.test.mjs adapters/*.test.mjs
 node grade.mjs grade submissions.jsonl
 ```
+
+## Teaching examples
+
+Export complete synthetic conversations as provider-neutral JSONL:
+
+```bash
+node teach.mjs > teaching.jsonl
+```
+
+Each line has the case ID, skill, instruction, tool catalog, and ordered `turns`: user request, assistant tool call, simulated tool result, and final assistant JSON. The export is for instruction tuning, tutorials, or checking an adapter's expected conversation shape. It contains the exact reference answers. A model trained on these examples has seen the public evaluation cases; report that exposure and use fresh cases to measure generalization.
 
 ## Run an agent against the benchmark
 
