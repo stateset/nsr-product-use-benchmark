@@ -33,7 +33,7 @@ Use Node.js 20 or later; there are no benchmark dependencies to install. Run the
 node grade.mjs tasks       # public task prompts
 node grade.mjs reference   # reference tool traces, JSONL
 node grade.mjs self-test   # score all reference traces
-node --test grade.test.mjs run.test.mjs
+node --test grade.test.mjs run.test.mjs adapters/openai-responses.test.mjs
 node grade.mjs grade submissions.jsonl
 ```
 
@@ -48,6 +48,17 @@ node run.mjs --output attempts.jsonl -- node path/to/your-adapter.mjs
 The runner sends `{"type":"start","id":"...","prompt":"...","tools":[...],"instruction":"..."}`. Pass the prompt, instruction, and tool schemas to the model. For each model tool call, send `{"type":"call","tool":"nsr_decide","arguments":{...}}`; the runner replies `{"type":"result","result":{...}}`. Return that result to the model. When the model is done, send `{"type":"final","final":{"disposition":"..."}}`. The runner writes one scoreable attempt per case to the output file and prints the aggregate report. It starts a new adapter process for each case, limits each case to 16 tool calls and two minutes, and never sends expected calls or answers to the adapter. The output file must not already exist.
 
 The protocol works with hosted APIs, local models, and agent frameworks. Record the exact model version and adapter code or commit alongside any published score. Do not use `reference` traces as a model submission or feed them to the model during evaluation.
+
+### OpenAI Responses API adapter
+
+The included adapter uses the [Responses API function-calling flow](https://developers.openai.com/api/docs/guides/function-calling) directly and needs no npm packages. Set your API key and an explicit model ID, then run:
+
+```bash
+export OPENAI_API_KEY=... OPENAI_MODEL=...
+node run.mjs --output openai-attempts.jsonl -- node adapters/openai-responses.mjs
+```
+
+The adapter passes the benchmark's tool schemas as non-strict functions, returns simulator results by `call_id`, and asks for a final JSON object. API calls can incur provider charges. No live model score is included in this repository.
 
 Each submission line has this shape. Include **calls and final only**; the scorer uses its own committed tool responses and ignores any claim about what a tool returned.
 
