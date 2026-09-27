@@ -33,7 +33,7 @@ Use Node.js 20 or later; there are no benchmark dependencies to install. Run the
 node grade.mjs tasks       # public task prompts
 node grade.mjs reference   # reference tool traces, JSONL
 node grade.mjs self-test   # score all reference traces
-node --test grade.test.mjs run.test.mjs teach.test.mjs adapters/*.test.mjs
+node --test grade.test.mjs run.test.mjs teach.test.mjs variant.test.mjs adapters/*.test.mjs
 node grade.mjs grade submissions.jsonl
 ```
 
@@ -46,6 +46,18 @@ node teach.mjs > teaching.jsonl
 ```
 
 Each line has the case ID, skill, instruction, tool catalog, and ordered `turns`: user request, assistant tool call, simulated tool result, and final assistant JSON. The export is for instruction tuning, tutorials, or checking an adapter's expected conversation shape. It contains the exact reference answers. A model trained on these examples has seen the public evaluation cases; report that exposure and use fresh cases to measure generalization.
+
+## Private ID variants
+
+Generate a fresh synthetic ID variant before evaluating a model exposed to the teaching examples. Keep the generated case file private and outside the repository:
+
+```bash
+node variant.mjs --output /tmp/nsr-private-cases.json
+NSR_BENCHMARK_CASES_PATH=/tmp/nsr-private-cases.json node grade.mjs self-test
+NSR_BENCHMARK_CASES_PATH=/tmp/nsr-private-cases.json node run.mjs --output private-attempts.jsonl -- node path/to/your-adapter.mjs
+```
+
+The generator replaces order, user, and subscription IDs consistently across prompts, expected calls, tool responses, and final answers. It creates the case file with owner-only permissions and refuses to overwrite one. The score report includes `case_set_sha256` so runs can be tied to the exact case set without publishing it. These variants check transfer to new entity IDs; they retain the same tasks and policy patterns. For a stronger generalization study, author new private scenarios and paraphrases using the same case schema and scorer.
 
 ## Run an agent against the benchmark
 

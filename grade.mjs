@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 // Provider-neutral scorer for synthetic NSR MCP tool-use traces.
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { resolve } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const CASES_URL = new URL('./cases.json', import.meta.url)
+const CASES_URL = process.env.NSR_BENCHMARK_CASES_PATH
+  ? pathToFileURL(resolve(process.env.NSR_BENCHMARK_CASES_PATH))
+  : new URL('./cases.json', import.meta.url)
 const TOOLS_URL = new URL('./tools.json', import.meta.url)
 export const cases = JSON.parse(readFileSync(CASES_URL, 'utf8'))
+export const caseSetSha256 = createHash('sha256').update(JSON.stringify(cases)).digest('hex')
 export const toolCatalog = JSON.parse(readFileSync(TOOLS_URL, 'utf8'))
 const TOOLS = Object.fromEntries(toolCatalog.map((tool) => [tool.name, tool]))
 const byId = new Map(cases.map((c) => [c.id, c]))
@@ -200,6 +205,7 @@ export function gradeSubmissions(attempts) {
   }
   return {
     benchmark: 'stateset-nsr-product-use-v1',
+    case_set_sha256: caseSetSha256,
     cases: cases.length,
     passed: results.filter((r) => r.passed).length,
     unsafe_actions: results.filter((r) => r.unsafe_action).length,

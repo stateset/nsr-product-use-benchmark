@@ -12,5 +12,5 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "20"
-      - run: node --test grade.test.mjs run.test.mjs teach.test.mjs adapters/*.test.mjs
+      - run: node --test grade.test.mjs run.test.mjs teach.test.mjs variant.test.mjs adapters/*.test.mjs
       - run: node grade.mjs self-test
